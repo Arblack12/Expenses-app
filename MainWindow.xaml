@@ -4,21 +4,42 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
                       Title="Budget App" Height="600" Width="800">
-    <Grid>
+    <DockPanel>
+        <!-- Optional: Top bar with Theme Toggle -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="5">
+            <Button Content="Toggle Theme" Click="ToggleTheme_Click" />
+        </StackPanel>
         <TabControl>
             <!-- Dashboard Tab -->
             <TabItem Header="Dashboard">
                 <Grid Margin="10">
-                    <ListView ItemsSource="{Binding Expenses}">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Date" DisplayMemberBinding="{Binding Date, StringFormat=d}" Width="100"/>
-                                <GridViewColumn Header="Category" DisplayMemberBinding="{Binding Category}" Width="100"/>
-                                <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}" Width="300"/>
-                                <GridViewColumn Header="Amount" DisplayMemberBinding="{Binding Amount, StringFormat=C}" Width="100"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                    <StackPanel>
+                        <!-- Dashboard Summary Table -->
+                        <DataGrid ItemsSource="{Binding DashboardSummaries}" AutoGenerateColumns="False" Margin="5">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Year" Binding="{Binding Year}" Width="80"/>
+                                <DataGridTextColumn Header="January" Binding="{Binding January, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="February" Binding="{Binding February, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="March" Binding="{Binding March, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="April" Binding="{Binding April, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="May" Binding="{Binding May, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="June" Binding="{Binding June, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="July" Binding="{Binding July, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="August" Binding="{Binding August, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="September" Binding="{Binding September, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="October" Binding="{Binding October, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="November" Binding="{Binding November, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="December" Binding="{Binding December, StringFormat='£{0:N2}'}" Width="80"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat='£{0:N2}'}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <!-- Dashboard Bar Chart -->
+                        <lvc:CartesianChart Series="{Binding DashboardSeries}" LegendLocation="Right" Margin="5">
+                            <lvc:CartesianChart.AxisX>
+                                <lvc:Axis Labels="{Binding DashboardYears}" />
+                            </lvc:CartesianChart.AxisX>
+                        </lvc:CartesianChart>
+                    </StackPanel>
                 </Grid>
             </TabItem>
 
@@ -27,76 +48,143 @@
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <!-- Expense Fields -->
+                        <!-- Date -->
                         <RowDefinition Height="Auto"/>
+                        <!-- Main Category -->
                         <RowDefinition Height="Auto"/>
+                        <!-- Sub Category ComboBox -->
                         <RowDefinition Height="Auto"/>
+                        <!-- Add Sub Category -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Description -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Amount -->
                         <RowDefinition Height="Auto"/>
                         <!-- Add Expense Button -->
                         <RowDefinition Height="Auto"/>
-                        <!-- New Category -->
+                        <!-- Category Management -->
                         <RowDefinition Height="*"/>
+                        <!-- Expense List -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Delete Selected Transactions Button -->
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
                     <!-- Date -->
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Date:" VerticalAlignment="Center" Margin="5"/>
                     <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding NewDate}" Margin="5"/>
-
-                    <!-- Category (ComboBox for budgeting categories) -->
+                    <!-- Main Category -->
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Category:" VerticalAlignment="Center" Margin="5"/>
                     <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Categories}" 
-                              SelectedItem="{Binding SelectedCategory}" Margin="5"/>
-
-                    <!-- Description -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Description:" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewDescription}" Margin="5"/>
-
-                    <!-- Amount -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Amount:" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewAmount}" Margin="5"/>
-
-                    <!-- Add Expense Button -->
-                    <Button Grid.Row="4" Grid.Column="1" Content="Add Expense" Command="{Binding AddExpenseCommand}" HorizontalAlignment="Right" Margin="5"/>
-
-                    <!-- Add New Category Section -->
-                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5">
-                        <!-- Removed PlaceholderText; simple TextBox now -->
-                        <TextBox Width="150" Text="{Binding NewCategory}" Margin="0,0,5,0"/>
-                        <Button Content="Add Category" Command="{Binding AddCategoryCommand}" />
+                    SelectedItem="{Binding SelectedCategory}" Margin="5"/>
+                    <!-- Sub Category ComboBox -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Sub Category:" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding SubCategories}" 
+                    SelectedItem="{Binding SelectedSubCategory}" Margin="5"/>
+                    <!-- Add Sub Category -->
+                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5">
+                        <TextBox Width="150" Text="{Binding NewSubCategory, UpdateSourceTrigger=PropertyChanged}" 
+                     Margin="0,0,5,0" ToolTip="Enter a new sub category for the selected main category">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding AddSubCategoryCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Content="Add Sub Category" Command="{Binding AddSubCategoryCommand}" />
                     </StackPanel>
+                    <!-- Description -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Description:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
+                    <!-- Amount -->
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Amount:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding NewAmount, UpdateSourceTrigger=PropertyChanged}" Margin="5">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding AddExpenseCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <!-- Add Expense Button -->
+                    <Button Grid.Row="6" Grid.Column="1" Content="Add Expense" 
+                  Command="{Binding AddExpenseCommand}" HorizontalAlignment="Right" Margin="5"/>
+                    <!-- Category Management: Add/Delete Main Category -->
+                    <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5">
+                        <TextBox Width="150" Text="{Binding NewCategory, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding AddCategoryCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Content="Add Category" Command="{Binding AddCategoryCommand}" Margin="0,0,5,0"/>
+                        <Button Content="Delete Category" Command="{Binding DeleteCategoryCommand}" />
+                    </StackPanel>
+                    <!-- Expense List with Checkboxes and Sortable Date Column -->
+                    <ListView Grid.Row="8" ItemsSource="{Binding Expenses}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Select" Width="50">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <!-- Date column with clickable header for sorting -->
+                                <GridViewColumn Header="Date" 
+                                DisplayMemberBinding="{Binding Date, StringFormat={}{0:dd/MM/yyyy}}">
+                                    <GridViewColumn.HeaderContainerStyle>
+                                        <Style TargetType="GridViewColumnHeader">
+                                            <Setter Property="Tag" Value="Date" />
+                                            <EventSetter Event="Click" Handler="GridViewColumnHeader_Click"/>
+                                        </Style>
+                                    </GridViewColumn.HeaderContainerStyle>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Month" DisplayMemberBinding="{Binding Date, StringFormat=MMMM}" Width="100"/>
+                                <GridViewColumn Header="Year" DisplayMemberBinding="{Binding Date, StringFormat=yyyy}" Width="100"/>
+                                <GridViewColumn Header="Category" DisplayMemberBinding="{Binding Category}" Width="100"/>
+                                <GridViewColumn Header="Sub Category" DisplayMemberBinding="{Binding SubCategory}" Width="120"/>
+                                <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}" Width="200"/>
+                                <GridViewColumn Header="Amount" DisplayMemberBinding="{Binding Amount, StringFormat='£{0:N2}'}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <!-- Delete Selected Transactions Button -->
+                    <Button Grid.Row="9" Grid.Column="1" Content="Delete Selected Transactions" 
+                  Command="{Binding DeleteTransactionCommand}" HorizontalAlignment="Right" Margin="5"/>
                 </Grid>
             </TabItem>
 
-            <!-- Monthly Summary Tab -->
-            <TabItem Header="Monthly Summary">
+            <!-- Summary Tab -->
+            <TabItem Header="Summary tab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="2*"/>
-                        <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
+                        <!-- Year selection -->
+                        <RowDefinition Height="2*"/>
+                        <!-- Chart -->
+                        <RowDefinition Height="*"/>
+                        <!-- DataGrid -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Export Button -->
                     </Grid.RowDefinitions>
-
-                    <!-- LiveCharts CartesianChart -->
-                    <lvc:CartesianChart Grid.Row="0" Series="{Binding MonthlySeries}" 
-                                        LegendLocation="Right"
-                                        AxisX="{Binding LabelsAxis}" Margin="5"/>
-
-                    <!-- DataGrid for summaries -->
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding MonthlySummaries}" AutoGenerateColumns="False" Margin="5">
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="Select Year:" VerticalAlignment="Center" Margin="5"/>
+                        <ComboBox ItemsSource="{Binding SummaryYears}" 
+                      SelectedItem="{Binding SelectedSummaryYear}" Margin="5" Width="100"/>
+                    </StackPanel>
+                    <lvc:CartesianChart Grid.Row="1" Series="{Binding SummarySeries}" LegendLocation="Right" Margin="5">
+                        <lvc:CartesianChart.AxisX>
+                            <lvc:Axis Labels="{Binding SummaryLabels}" />
+                        </lvc:CartesianChart.AxisX>
+                    </lvc:CartesianChart>
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding SummaryMonthlySummaries}" AutoGenerateColumns="False" Margin="5">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Month" Binding="{Binding Month}" Width="*"/>
-                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=C}" Width="*"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat='£{0:N2}'}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <!-- Export Button -->
-                    <Button Grid.Row="2" Content="Export to CSV" Command="{Binding ExportCommand}" HorizontalAlignment="Right" Margin="5"/>
+                    <Button Grid.Row="3" Content="Export to CSV" Command="{Binding ExportCommand}" 
+                  HorizontalAlignment="Right" Margin="5"/>
                 </Grid>
             </TabItem>
         </TabControl>
-    </Grid>
+    </DockPanel>
 </controls:MetroWindow>
