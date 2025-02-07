@@ -1,0 +1,102 @@
+﻿<controls:MetroWindow x:Class="BudgetApp.MainWindow"
+                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+                      xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+                      Title="Budget App" Height="600" Width="800">
+    <Grid>
+        <TabControl>
+            <!-- Dashboard Tab -->
+            <TabItem Header="Dashboard">
+                <Grid Margin="10">
+                    <ListView ItemsSource="{Binding Expenses}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Date" DisplayMemberBinding="{Binding Date, StringFormat=d}" Width="100"/>
+                                <GridViewColumn Header="Category" DisplayMemberBinding="{Binding Category}" Width="100"/>
+                                <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}" Width="300"/>
+                                <GridViewColumn Header="Amount" DisplayMemberBinding="{Binding Amount, StringFormat=C}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </TabItem>
+
+            <!-- Add Expense Tab -->
+            <TabItem Header="Add Expense">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- Expense Fields -->
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <!-- Add Expense Button -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- New Category -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Date -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Date:" VerticalAlignment="Center" Margin="5"/>
+                    <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding NewDate}" Margin="5"/>
+
+                    <!-- Category (ComboBox for budgeting categories) -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Category:" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Categories}" 
+                              SelectedItem="{Binding SelectedCategory}" Margin="5"/>
+
+                    <!-- Description -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Description:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewDescription}" Margin="5"/>
+
+                    <!-- Amount -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Amount:" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewAmount}" Margin="5"/>
+
+                    <!-- Add Expense Button -->
+                    <Button Grid.Row="4" Grid.Column="1" Content="Add Expense" Command="{Binding AddExpenseCommand}" HorizontalAlignment="Right" Margin="5"/>
+
+                    <!-- Add New Category Section -->
+                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5">
+                        <!-- Removed PlaceholderText; simple TextBox now -->
+                        <TextBox Width="150" Text="{Binding NewCategory}" Margin="0,0,5,0"/>
+                        <Button Content="Add Category" Command="{Binding AddCategoryCommand}" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Monthly Summary Tab -->
+            <TabItem Header="Monthly Summary">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- LiveCharts CartesianChart -->
+                    <lvc:CartesianChart Grid.Row="0" Series="{Binding MonthlySeries}" 
+                                        LegendLocation="Right"
+                                        AxisX="{Binding LabelsAxis}" Margin="5"/>
+
+                    <!-- DataGrid for summaries -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding MonthlySummaries}" AutoGenerateColumns="False" Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Month" Binding="{Binding Month}" Width="*"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=C}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Export Button -->
+                    <Button Grid.Row="2" Content="Export to CSV" Command="{Binding ExportCommand}" HorizontalAlignment="Right" Margin="5"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</controls:MetroWindow>
