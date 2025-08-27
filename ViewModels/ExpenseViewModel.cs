@@ -84,7 +84,7 @@ namespace BudgetApp
         public int SelectedSummaryYear
         {
             get => _selectedSummaryYear;
-            set { _selectedSummaryYear = value; OnPropertyChanged(nameof(SelectedSummaryYear)); UpdateSummaryData(); }
+            set { _selectedSummaryYear = value; OnPropertyChanged(nameof(SelectedSummaryYear)); UpdateSummaryData(); UpdateSummarySubCategories(); }
         }
         public SeriesCollection SummarySeries { get; set; } = new SeriesCollection();
         public ObservableCollection<string> SummaryLabels { get; set; } = new ObservableCollection<string>();
@@ -107,6 +107,58 @@ namespace BudgetApp
             get => _selectedSubCategory;
             set { _selectedSubCategory = value; OnPropertyChanged(nameof(SelectedSubCategory)); CommandManager.InvalidateRequerySuggested(); }
         }
+
+        // NEW: Properties for Summary Filters
+        private string _summarySelectedCategory = "All";
+        public string SummarySelectedCategory
+        {
+            get => _summarySelectedCategory;
+            set
+            {
+                if (_summarySelectedCategory != value)
+                {
+                    _summarySelectedCategory = value;
+                    OnPropertyChanged(nameof(SummarySelectedCategory));
+                    UpdateSummarySubCategories();
+                    UpdateSummaryData();
+                }
+            }
+        }
+
+        private string _summarySelectedSubCategory = "All";
+        public string SummarySelectedSubCategory
+        {
+            get => _summarySelectedSubCategory;
+            set
+            {
+                if (_summarySelectedSubCategory != value)
+                {
+                    _summarySelectedSubCategory = value;
+                    OnPropertyChanged(nameof(SummarySelectedSubCategory));
+                    UpdateSummaryDescriptions();
+                    UpdateSummaryData();
+                }
+            }
+        }
+
+        private string _summarySelectedDescription = "All";
+        public string SummarySelectedDescription
+        {
+            get => _summarySelectedDescription;
+            set
+            {
+                if (_summarySelectedDescription != value)
+                {
+                    _summarySelectedDescription = value;
+                    OnPropertyChanged(nameof(SummarySelectedDescription));
+                    UpdateSummaryData();
+                }
+            }
+        }
+
+        public ObservableCollection<string> SummaryCategories { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> SummarySubCategories { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> SummaryDescriptions { get; set; } = new ObservableCollection<string>();
 
         public ExpenseViewModel()
         {
@@ -146,6 +198,12 @@ namespace BudgetApp
             SelectedSummaryYear = DateTime.Now.Year;
             UpdateSummaryData();
 
+            // Initialize Summary filters
+            SummaryCategories = new ObservableCollection<string>(Categories);
+            SummaryCategories.Insert(0, "All");
+            _summarySelectedCategory = "All";
+            UpdateSummarySubCategories();
+
             Expenses.CollectionChanged += (s, e) =>
             {
                 UpdateMonthlySummaries();
@@ -156,9 +214,15 @@ namespace BudgetApp
                     SummaryYears.Add(year);
                 if (!SummaryYears.Contains(DateTime.Now.Year))
                     SummaryYears.Add(DateTime.Now.Year);
+
+                // Refresh summary data and cascading filters.
                 UpdateSummaryData();
+                UpdateSummarySubCategories();
                 UpdateDashboardData();
             };
+
+            // Also update the dashboard after initial load.
+            UpdateDashboardData();
         }
 
         private bool CanAddExpense()
@@ -180,12 +244,12 @@ namespace BudgetApp
                 Date = NewDate,
                 Category = SelectedCategory,
                 SubCategory = SelectedSubCategory,
-                Description = NewDescription, // may be empty
+                Description = NewDescription,
                 Amount = amt,
                 IsSelected = false
             };
             Expenses.Add(newExp);
-            NewDate = DateTime.Now;
+            // Do NOT reset NewDate so that older transactions remain.
             NewDescription = string.Empty;
             NewAmount = string.Empty;
             SaveExpenses();
@@ -298,10 +362,64 @@ namespace BudgetApp
                 LabelsAxis[0].Labels = labels;
         }
 
+        // UPDATED: Summary filtering methods
+
+        private void UpdateSummarySubCategories()
+        {
+            SummarySubCategories.Clear();
+            SummarySubCategories.Add("All");
+            var filtered = Expenses.Where(e => e.Date.Year == SelectedSummaryYear);
+            if (SummarySelectedCategory != "All")
+                filtered = filtered.Where(e => e.Category == SummarySelectedCategory);
+            foreach (var sub in filtered.Select(e => e.SubCategory).Distinct().Where(s => !string.IsNullOrWhiteSpace(s)))
+            {
+                SummarySubCategories.Add(sub);
+            }
+            SummarySelectedSubCategory = "All";
+            UpdateSummaryDescriptions();
+        }
+
+        private void UpdateSummaryDescriptions()
+        {
+            SummaryDescriptions.Clear();
+            SummaryDescriptions.Add("All");
+            var filtered = Expenses.Where(e => e.Date.Year == SelectedSummaryYear);
+            if (SummarySelectedCategory != "All")
+                filtered = filtered.Where(e => e.Category == SummarySelectedCategory);
+            if (SummarySelectedSubCategory != "All")
+                filtered = filtered.Where(e => e.SubCategory == SummarySelectedSubCategory);
+            var descs = filtered.Select(e => e.Description)
+                                .Distinct()
+                                .Where(d => !string.IsNullOrWhiteSpace(d))
+                                .ToList();
+            // If no descriptions match the current filters, fall back to all descriptions.
+            if (!descs.Any())
+            {
+                descs = Expenses.Select(e => e.Description)
+                                .Distinct()
+                                .Where(d => !string.IsNullOrWhiteSpace(d))
+                                .ToList();
+            }
+            foreach (var desc in descs)
+            {
+                SummaryDescriptions.Add(desc);
+            }
+            // Reset selection if needed:
+            if (SummaryDescriptions.Count > 0)
+                SummarySelectedDescription = SummaryDescriptions.First();
+        }
+
         private void UpdateSummaryData()
         {
-            var summaries = Expenses
-                .Where(exp => exp.Date.Year == SelectedSummaryYear)
+            var query = Expenses.Where(exp => exp.Date.Year == SelectedSummaryYear);
+            if (SummarySelectedCategory != "All")
+                query = query.Where(exp => exp.Category == SummarySelectedCategory);
+            if (SummarySelectedSubCategory != "All")
+                query = query.Where(exp => exp.SubCategory == SummarySelectedSubCategory);
+            if (SummarySelectedDescription != "All")
+                query = query.Where(exp => exp.Description == SummarySelectedDescription);
+
+            var summaries = query
                 .GroupBy(exp => exp.Date.Month)
                 .Select(g => new { Month = g.Key, Total = g.Sum(exp => exp.Amount) })
                 .OrderBy(x => x.Month)
@@ -327,6 +445,7 @@ namespace BudgetApp
             OnPropertyChanged(nameof(SummarySeries));
         }
 
+        // UPDATED: Dashboard data update so that DashboardYears is updated in place.
         private void UpdateDashboardData()
         {
             DashboardSummaries.Clear();
@@ -356,7 +475,8 @@ namespace BudgetApp
                 DashboardSummaries.Add(ds);
             }
             var yearsList = DashboardSummaries.Select(ds => ds.Year.ToString()).ToList();
-            DashboardYears = new ObservableCollection<string>(yearsList);
+            foreach (var y in yearsList)
+                DashboardYears.Add(y);
             var totals = DashboardSummaries.Select(ds => ds.Total).ToArray();
             DashboardSeries.Add(new ColumnSeries
             {
